@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sybil Wallet Checker</title>
+    <title>L0 Sybil Wallet Checker</title>
     <link href="https://fonts.googleapis.com/css2?family=Lexend&display=swap" rel="stylesheet">
     <style>
         body {
@@ -12,7 +12,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
@@ -23,28 +23,48 @@
             text-align: center;
             margin-bottom: 20px;
         }
-        input {
+        textarea {
             margin: 10px;
             padding: 10px;
             width: 100%;
-            max-width: 400px;
+            max-width: 600px;
+            height: 150px;
             box-sizing: border-box;
+            font-family: 'Lexend', sans-serif;
+            font-size: 1rem;
         }
         button {
             padding: 10px 20px;
             margin-top: 10px;
             cursor: pointer;
+            font-family: 'Lexend', sans-serif;
+            font-size: 1rem;
         }
-        #result {
+        #result-list {
             margin-top: 20px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        .result-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: left;
+            word-wrap: break-word;
+            font-family: 'Lexend', sans-serif;
+        }
+        .sybil {
+            color: red;
+        }
+        .not-sybil {
+            color: green;
         }
         footer {
             margin-top: 30px;
             font-size: 0.9rem;
             text-align: center;
+            font-family: 'Lexend', sans-serif;
         }
         footer a {
             color: #007bff;
@@ -54,41 +74,41 @@
 </head>
 <body>
     <h1>Layerzero Sybil Checker</h1>
-    <input type="text" id="walletAddress" placeholder="Enter your wallet address">
-    <button onclick="checkWallet()">Check</button>
-    <div id="result"></div>
+    <textarea id="walletAddresses" placeholder="Enter wallet addresses, each on a new line"></textarea>
+    <button onclick="checkAllWallets()">Check Now</button>
+    <div id="result-list"></div>
     <footer>
         Created by <a href="https://x.com/i_5ive" target="_blank">Zenith</a>
     </footer>
 
     <script>
-        async function checkWallet() {
-            const walletAddress = document.getElementById('walletAddress').value.trim();
-            const resultDiv = document.getElementById('result');
-            
-            if (!walletAddress) {
-                resultDiv.textContent = "Please enter a wallet address.";
-                resultDiv.style.color = 'red';
-                return;
-            }
-
-            resultDiv.textContent = "Checking...";
+        async function checkAllWallets() {
+            const walletAddresses = document.getElementById('walletAddresses').value.trim().split('\n').map(addr => addr.trim()).filter(addr => addr);
+            const resultList = document.getElementById('result-list');
+            resultList.innerHTML = 'Checking...';
 
             try {
                 const response = await fetch('https://raw.githubusercontent.com/LayerZero-Labs/sybil-report/main/initialList.txt');
                 const text = await response.text();
                 const addresses = text.split('\n').map(addr => addr.trim());
 
-                if (addresses.includes(walletAddress)) {
-                    resultDiv.textContent = "YOU ARE SYBIL";
-                    resultDiv.style.color = 'red';
-                } else {
-                    resultDiv.textContent = "Congrats! Your wallet is not in the sybil list";
-                    resultDiv.style.color = 'green';
-                }
+                resultList.innerHTML = '';
+                walletAddresses.forEach(walletAddress => {
+                    const div = document.createElement('div');
+                    div.className = 'result-item';
+
+                    if (addresses.includes(walletAddress)) {
+                        div.textContent = `${walletAddress} - YOU ARE SYBIL`;
+                        div.classList.add('sybil');
+                    } else {
+                        div.textContent = `${walletAddress} - Congrats! Your wallet is not in the sybil list`;
+                        div.classList.add('not-sybil');
+                    }
+
+                    resultList.appendChild(div);
+                });
             } catch (error) {
-                resultDiv.textContent = "Error fetching the Sybil list.";
-                resultDiv.style.color = 'red';
+                resultList.innerHTML = 'Error fetching the Sybil list.';
                 console.error(error);
             }
         }
